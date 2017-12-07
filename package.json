@@ -1,0 +1,15 @@
+{
+  "name": "elm-eos",
+  "version": "0.1.0",
+  "description": "",
+  "scripts": {
+    "test": "elm-test Eos/Test.elm"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "elm": "^0.18.0",
+    "elm-test": "liamcurry/node-test-runner"
+  }
+}
