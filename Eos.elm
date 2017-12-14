@@ -1,100 +1,211 @@
 module Eos
     exposing
-        ( Account
+        ( Abi
+        , Account
         , AccountName
         , AccountPermission
+        , AccountPermissionWeight
+        , Action
+        , ActionName
+        , Asset
+        , Authority
         , BaseUrl
         , Block
+        , BlockId
+        , BlockNum
         , BlockRef(..)
         , Code
+        , ControlledAccounts
         , CreatedAccount
+        , FieldName
+        , FuncName
         , Info
+        , KeyAccounts
+        , KeyPermissionWeight
         , Message
+        , Permission
         , PermissionName
         , PrivateKey
         , PublicKey
         , PushedCode
         , PushedTransaction
+        , PushedTransactions
+        , ShareType
         , Signature
+        , Struct
+        , Table
         , TableName
         , TableRows
         , Transaction
+        , TransactionId
+        , TypeDef
+        , TypeName
         , accountName
-        , accountNameToString
+        , accountNameString
+        , actionName
+        , actionNameString
+        , asset
+        , assetString
         , baseUrl
         , blockId
+        , blockIdRef
+        , blockIdString
         , blockNum
+        , blockNumInt
+        , blockNumRef
+        , fieldName
+        , fieldNameString
+        , funcName
+        , funcNameString
         , permissionName
-        , permissionNameToString
+        , permissionNameString
         , privateKey
-        , privateKeyToString
+        , privateKeyString
         , publicKey
-        , publicKeyToString
+        , publicKeyString
+        , shareType
+        , shareTypeString
         , signature
-        , signatureToString
+        , signatureString
         , tableName
-        , tableNameToString
+        , tableNameString
+        , transactionId
+        , transactionIdString
+        , typeName
+        , typeNameString
         )
 
-{-|
+{-| See: libraries/types/include/eos/types/generated.hpp
+See: libraries/types/include/eos/types/native.hpp
 
 
-# Basics
+## Basics
 
 @docs BaseUrl, baseUrl
-@docs AccountName, accountNameToString, accountName
+@docs AccountName, accountNameString, accountName, funcName, FuncName, funcNameString
+@docs Asset, asset, assetString
+@docs ShareType, shareType, shareTypeString
+@docs AccountPermissionWeight, Authority, KeyPermissionWeight, Permission
+@docs Action, ActionName, actionName, actionNameString
+
+
+## Blocks
+
 @docs Block, BlockRef, blockId, blockNum, Info
+@docs BlockNum, BlockId, blockIdRef, blockNumRef, blockIdString, blockNumInt
 
 
-# Keys
+## Keys
 
-@docs PublicKey, publicKeyToString, publicKey
-@docs PrivateKey, privateKeyToString, privateKey
-
-
-# Signatures
-
-@docs Signature, signatureToString, signature
+@docs PublicKey, publicKeyString, publicKey
+@docs PrivateKey, privateKeyString, privateKey
 
 
-# Accounts and Permissions
+## Signatures
+
+@docs Signature, signatureString, signature
+
+
+## Accounts and Permissions
 
 @docs Account
-@docs CreatedAccount
+@docs CreatedAccount, ControlledAccounts, KeyAccounts
 @docs AccountPermission
-@docs PermissionName, permissionNameToString, permissionName
+@docs PermissionName, permissionNameString, permissionName
 
 
-# Tables
+## Tables
 
-@docs TableName, tableName, tableNameToString
-@docs TableRows
-
-
-# Transactions
-
-@docs Transaction, Message, PushedTransaction
+@docs TableName, tableName, tableNameString
+@docs TableRows, Table
 
 
-# Code
+## Transactions
+
+@docs Transaction, Message, PushedTransaction, PushedTransactions
+@docs TransactionId, transactionId, transactionIdString
+
+
+## Code
 
 @docs Code, PushedCode
+
+@docs Abi, FieldName, Struct, TypeDef, TypeName, fieldName, fieldNameString
+@docs typeName, typeNameString
 
 -}
 
 import Date exposing (Date)
 import Erl
+import EveryDict exposing (EveryDict)
+
+
+{-| -}
+type alias Abi =
+    { types : List TypeDef
+    , structs : List Struct
+    , actions : List Action
+    , tables : List Table
+    }
+
+
+{-| -}
+type alias TypeDef =
+    { newTypeName : TypeName
+    , type_ : TypeName
+    }
+
+
+{-| -}
+type alias Struct =
+    { name : TypeName
+    , base : Maybe TypeName
+    , fields : EveryDict FieldName TypeName
+    }
+
+
+{-| -}
+type alias Action =
+    { actionName : ActionName
+    , type_ : TypeName
+    }
+
+
+{-| -}
+type ActionName
+    = ActionName String
+
+
+{-| -}
+actionName : String -> ActionName
+actionName =
+    ActionName
+
+
+{-| -}
+actionNameString : ActionName -> String
+actionNameString (ActionName str) =
+    str
+
+
+{-| -}
+type alias Table =
+    { name : TableName
+    , indexType : TypeName
+    , keyNames : List FieldName
+    , keyTypes : List TypeName
+    , type_ : TypeName
+    }
 
 
 {-| -}
 type alias Account =
     { accountName : AccountName
-    , eosBalance : String
-    , stakedBalance : String
-    , unstakingBalance : String
+    , eosBalance : ShareType
+    , stakedBalance : ShareType
+    , unstakingBalance : ShareType
     , lastUnstakingTime : Date
-
-    -- , permissions : List AccountPermission
+    , permissions : List Permission
     }
 
 
@@ -110,9 +221,39 @@ accountName =
 
 
 {-| -}
-accountNameToString : AccountName -> String
-accountNameToString (AccountName str) =
+accountNameString : AccountName -> String
+accountNameString (AccountName str) =
     str
+
+
+{-| -}
+type alias Permission =
+    { permName : PermissionName
+    , parent : Maybe PermissionName
+    , requiredAuth : Authority
+    }
+
+
+{-| -}
+type alias Authority =
+    { threshold : Maybe Int
+    , keys : List KeyPermissionWeight
+    , accounts : List AccountPermissionWeight
+    }
+
+
+{-| -}
+type alias KeyPermissionWeight =
+    { key : PublicKey
+    , weight : Int
+    }
+
+
+{-| -}
+type alias AccountPermissionWeight =
+    { permission : AccountPermission
+    , weight : Int
+    }
 
 
 {-| -}
@@ -135,33 +276,67 @@ baseUrl =
 
 {-| -}
 type alias Block =
-    { previous : String
+    { previous : BlockId
     , timestamp : Date
     , transactionMerkleRoot : String
     , producer : AccountName
-    , producerSignature : String
-    , id : String
-    , blockNum : Int
+    , producerSignature : Signature
+    , id : BlockId
+    , blockNum : BlockNum
     , refBlockPrefix : Int
     }
 
 
 {-| -}
 type BlockRef
-    = BlockNum Int
-    | BlockId String
+    = BlockNumRef BlockNum
+    | BlockIdRef BlockId
 
 
 {-| -}
-blockNum : Int -> BlockRef
+blockNumRef : Int -> BlockRef
+blockNumRef =
+    BlockNumRef << blockNum
+
+
+{-| -}
+blockIdRef : String -> BlockRef
+blockIdRef =
+    BlockIdRef << blockId
+
+
+{-| -}
+type BlockId
+    = BlockId String
+
+
+{-| -}
+blockId : String -> BlockId
+blockId =
+    BlockId
+
+
+{-| -}
+blockIdString : BlockId -> String
+blockIdString (BlockId str) =
+    str
+
+
+{-| -}
+type BlockNum
+    = BlockNum Int
+
+
+{-| -}
+blockNum : Int -> BlockNum
 blockNum =
     BlockNum
 
 
 {-| -}
-blockId : String -> BlockRef
-blockId =
-    BlockId
+blockNumInt : BlockNum -> Int
+blockNumInt (BlockNum i) =
+    i
 
 
 {-| -}
@@ -169,29 +344,66 @@ type alias Code =
     { accountName : AccountName
     , codeHash : String
     , wast : String
-
-    -- abi
+    , abi : Abi
     }
+
+
+{-| -}
+type alias ControlledAccounts =
+    { controlledAccounts : List AccountName }
 
 
 {-| -}
 type alias CreatedAccount =
     { creator : AccountName
     , name : AccountName
-
-    --, owner
-    --, active
-    --, recovery
-    , deposit : String
+    , owner : Authority
+    , active : Authority
+    , recovery : Authority
+    , deposit : Asset
     }
+
+
+{-| -}
+type FieldName
+    = FieldName String
+
+
+{-| -}
+fieldName : String -> FieldName
+fieldName =
+    FieldName
+
+
+{-| -}
+fieldNameString : FieldName -> String
+fieldNameString (FieldName str) =
+    str
+
+
+{-| -}
+type FuncName
+    = FuncName String
+
+
+{-| -}
+funcName : String -> FuncName
+funcName =
+    FuncName
+
+
+{-| -}
+funcNameString : FuncName -> String
+funcNameString (FuncName str) =
+    str
 
 
 {-| -}
 type alias Info =
     { serverVersion : String
-    , headBlockNum : Int
-    , lastIrreversibleBlockNum : Int
-    , headBlockId : String
+    , headBlockNum : BlockNum
+    , lastIrreversibleBlockNum : BlockNum
+    , headBlockId : BlockId
     , headBlockTime : Date
     , headBlockProducer : AccountName
     , recentSlots : String
@@ -200,9 +412,14 @@ type alias Info =
 
 
 {-| -}
+type alias KeyAccounts =
+    { accountNames : List AccountName }
+
+
+{-| -}
 type alias Message data =
     { code : AccountName
-    , type_ : String
+    , type_ : FuncName
     , authorization : List AccountPermission
     , data : data
     }
@@ -220,8 +437,8 @@ permissionName =
 
 
 {-| -}
-permissionNameToString : PermissionName -> String
-permissionNameToString (PermissionName str) =
+permissionNameString : PermissionName -> String
+permissionNameString (PermissionName str) =
     str
 
 
@@ -237,8 +454,8 @@ privateKey =
 
 
 {-| -}
-privateKeyToString : PrivateKey -> String
-privateKeyToString (PrivateKey str) =
+privateKeyString : PrivateKey -> String
+privateKeyString (PrivateKey str) =
     str
 
 
@@ -254,8 +471,8 @@ publicKey =
 
 
 {-| -}
-publicKeyToString : PublicKey -> String
-publicKeyToString (PublicKey str) =
+publicKeyString : PublicKey -> String
+publicKeyString (PublicKey str) =
     str
 
 
@@ -272,9 +489,50 @@ type alias PushedCode =
 
 {-| -}
 type alias PushedTransaction data =
-    { transactionId : String
+    { transactionId : TransactionId
     , transaction : Transaction data
     }
+
+
+{-| -}
+type alias PushedTransactions data =
+    { timeLimitExceededError : Bool
+    , transactions : List (PushedTransaction data)
+    }
+
+
+{-| -}
+type ShareType
+    = ShareType String
+
+
+{-| -}
+shareType : String -> ShareType
+shareType =
+    ShareType
+
+
+{-| -}
+shareTypeString : ShareType -> String
+shareTypeString (ShareType str) =
+    str
+
+
+{-| -}
+type Asset
+    = Asset String
+
+
+{-| -}
+asset : String -> Asset
+asset =
+    Asset
+
+
+{-| -}
+assetString : Asset -> String
+assetString (Asset str) =
+    str
 
 
 {-| -}
@@ -289,8 +547,8 @@ signature =
 
 
 {-| -}
-signatureToString : Signature -> String
-signatureToString (Signature str) =
+signatureString : Signature -> String
+signatureString (Signature str) =
     str
 
 
@@ -306,8 +564,8 @@ tableName =
 
 
 {-| -}
-tableNameToString : TableName -> String
-tableNameToString (TableName str) =
+tableNameString : TableName -> String
+tableNameString (TableName str) =
     str
 
 
@@ -319,13 +577,47 @@ type alias TableRows row =
 
 
 {-| -}
+type TypeName
+    = TypeName String
+
+
+{-| -}
+typeName : String -> TypeName
+typeName =
+    TypeName
+
+
+{-| -}
+typeNameString : TypeName -> String
+typeNameString (TypeName str) =
+    str
+
+
+{-| -}
 type alias Transaction data =
-    { refBlockNum : Int
+    { refBlockNum : BlockNum
     , refBlockPrefix : Int
     , expiration : Date
     , scope : List AccountName
 
     --, readScope
     , messages : List (Message data)
-    , signatures : List String
+    , signatures : List Signature
     }
+
+
+{-| -}
+type TransactionId
+    = TransactionId String
+
+
+{-| -}
+transactionId : String -> TransactionId
+transactionId =
+    TransactionId
+
+
+{-| -}
+transactionIdString : TransactionId -> String
+transactionIdString (TransactionId str) =
+    str

@@ -1,27 +1,48 @@
 module Eos.Test
     exposing
-        ( account
+        ( abi
+        , account
         , accountName
         , accountPermission
+        , accountPermissionWeight
+        , action
+        , actionName
+        , asset
+        , authority
         , block
+        , blockId
+        , blockNum
         , blockRef
         , code
+        , controlledAccounts
         , createdAccount
+        , fieldName
+        , funcName
         , info
+        , keyAccounts
+        , keyPermissionWeight
         , message
         , messageSamples
+        , permission
         , permissionName
         , privateKey
         , publicKey
         , pushedCode
         , pushedTransaction
         , pushedTransactionSamples
+        , pushedTransactions
+        , pushedTransactionsSamples
+        , shareType
         , signature
+        , struct
+        , table
         , tableName
         , tableRows
         , tableRowsSamples
         , transaction
         , transactionSamples
+        , typeDef
+        , typeName
         )
 
 {-| Docs
@@ -35,6 +56,12 @@ module Eos.Test
 @docs info, message, messageSamples, permissionName
 @docs privateKey, publicKey, signature, tableName, tableRows, tableRowsSamples
 @docs transaction, transactionSamples
+@docs abi, typeDef, struct
+@docs accountPermissionWeight, action, actionName
+@docs asset, authority, blockId, blockNum
+@docs controlledAccounts, fieldName, funcName, keyAccounts
+@docs keyPermissionWeight, permission, pushedTransaction, pushedTransactions
+@docs pushedTransactionsSamples, shareType, table, typeName
 
 -}
 
@@ -46,6 +73,129 @@ import Fuzz exposing (Fuzzer)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode exposing (Value)
 import Test exposing (Test, describe, fuzz)
+
+
+{-| -}
+abi : Test
+abi =
+    tests "Abi" Fuzz.abi Encode.abi Decode.abi
+
+
+{-| -}
+action : Test
+action =
+    tests "Action" Fuzz.action Encode.action Decode.action
+
+
+{-| -}
+actionName : Test
+actionName =
+    tests "ActionName" Fuzz.actionName Encode.actionName Decode.actionName
+
+
+{-| -}
+asset : Test
+asset =
+    tests "Asset" Fuzz.asset Encode.asset Decode.asset
+
+
+{-| -}
+authority : Test
+authority =
+    tests "Authority" Fuzz.authority Encode.authority Decode.authority
+
+
+{-| -}
+blockId : Test
+blockId =
+    tests "BlockId" Fuzz.blockId Encode.blockId Decode.blockId
+
+
+{-| -}
+blockNum : Test
+blockNum =
+    tests "BlockNum" Fuzz.blockNum Encode.blockNum Decode.blockNum
+
+
+{-| -}
+controlledAccounts : Test
+controlledAccounts =
+    tests "ControlledAccounts"
+        Fuzz.controlledAccounts
+        Encode.controlledAccounts
+        Decode.controlledAccounts
+
+
+{-| -}
+fieldName : Test
+fieldName =
+    tests "FieldName" Fuzz.fieldName Encode.fieldName Decode.fieldName
+
+
+{-| -}
+funcName : Test
+funcName =
+    tests "FuncName" Fuzz.funcName Encode.funcName Decode.funcName
+
+
+{-| -}
+keyAccounts : Test
+keyAccounts =
+    tests "KeyAccounts" Fuzz.keyAccounts Encode.keyAccounts Decode.keyAccounts
+
+
+{-| -}
+keyPermissionWeight : Test
+keyPermissionWeight =
+    tests "KeyPermissionWeight"
+        Fuzz.keyPermissionWeight
+        Encode.keyPermissionWeight
+        Decode.keyPermissionWeight
+
+
+{-| -}
+permission : Test
+permission =
+    tests "Permission" Fuzz.permission Encode.permission Decode.permission
+
+
+{-| -}
+accountPermissionWeight : Test
+accountPermissionWeight =
+    tests "AccountPermissionWeight"
+        Fuzz.accountPermissionWeight
+        Encode.accountPermissionWeight
+        Decode.accountPermissionWeight
+
+
+{-| -}
+typeDef : Test
+typeDef =
+    tests "TypeDef" Fuzz.typeDef Encode.typeDef Decode.typeDef
+
+
+{-| -}
+struct : Test
+struct =
+    tests "Struct" Fuzz.struct Encode.struct Decode.struct
+
+
+{-| -}
+shareType : Test
+shareType =
+    tests "ShareType" Fuzz.shareType Encode.shareType Decode.shareType
+
+
+{-| -}
+table : Test
+table =
+    tests "Table" Fuzz.table Encode.table Decode.table
+
+
+{-| -}
+typeName : Test
+typeName =
+    tests "TypeName" Fuzz.typeName Encode.typeName Decode.typeName
 
 
 {-| -}
@@ -157,6 +307,24 @@ pushedTransactionSamples =
 
 
 {-| -}
+pushedTransactions : String -> Fuzzer thing -> (thing -> Value) -> Decoder thing -> Test
+pushedTransactions label dataFuzzer encodeData dataDecoder =
+    tests
+        ("PushedTransactions (" ++ label ++ ")")
+        (Fuzz.pushedTransactions dataFuzzer)
+        (Encode.pushedTransactions encodeData)
+        (Decode.pushedTransactions dataDecoder)
+
+
+{-| -}
+pushedTransactionsSamples : Test
+pushedTransactionsSamples =
+    describe "PushedTransactions Samples"
+        [ pushedTransactions "CreatedAccount" Fuzz.createdAccount Encode.createdAccount Decode.createdAccount
+        ]
+
+
+{-| -}
 signature : Test
 signature =
     tests "Signature" Fuzz.signature Encode.signature Decode.signature
@@ -218,7 +386,9 @@ serialization : Fuzzer thing -> (thing -> Value) -> Decoder thing -> Test
 serialization fuzzer encode decoder =
     fuzz fuzzer "serialization" <|
         \thing ->
-            thing
-                |> encode
-                |> Decode.decodeValue decoder
-                |> Expect.equal (Ok thing)
+            case thing |> encode |> Decode.decodeValue decoder of
+                Ok _ ->
+                    Expect.pass
+
+                Err err ->
+                    Expect.fail err
